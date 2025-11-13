@@ -11,10 +11,14 @@ import os
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"  # change for production
 
-# SQLite DB in project folder
-base_dir = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(base_dir, "books.db")
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+# ===============================
+# PostgreSQL DATABASE (Render)
+# ===============================
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "postgresql://library_db_8i86_user:"
+    "KASZ1GeFtK0LDRNasYIdEjK4zyfSP7M2"
+    "@dpg-d4avmb0gjchc73f5pr5g-a/library_db_8i86"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -54,17 +58,20 @@ def home():
     q = request.args.get("search", "").strip()
     books = []
     if q:
-        # case-insensitive substring search across name and author
         like = f"%{q}%"
         books = Book.query.filter(
-            db.or_(Book.name.ilike(like), Book.author.ilike(like), Book.isbn.ilike(like))
+            db.or_(
+                Book.name.ilike(like),
+                Book.author.ilike(like),
+                Book.isbn.ilike(like)
+            )
         ).order_by(Book.name).all()
+
     return render_template("index.html", books=books, query=q)
 
 
 @app.route("/add", methods=["POST"])
 def add_book():
-    # read form fields (modal)
     isbn = request.form.get("isbn", "").strip() or None
     name = request.form.get("name", "").strip()
     author = request.form.get("author", "").strip()
@@ -74,12 +81,10 @@ def add_book():
     shelf = request.form.get("shelf", "").strip() or None
     copies = request.form.get("copies", "").strip()
 
-    # validation: require name + author
     if not name or not author:
         flash("Please provide at least Book Name and Author.", "danger")
         return redirect(url_for("home"))
 
-    # convert numeric fields safely
     try:
         year_i = int(year) if year else None
     except ValueError:
@@ -103,29 +108,36 @@ def add_book():
 
     db.session.add(new)
     db.session.commit()
-    flash(f'Book "{name}" added.', "success")
 
-    # redirect to home and show new book in results
+    flash(f'Book "{name}" added.', "success")
     return redirect(url_for("home", search=name))
 
 
-# API-esque endpoint (optional) - can be used later for AJAX
 @app.route("/api/books")
 def api_books():
     q = request.args.get("search", "").strip()
     if not q:
         return {"books": []}
+
     like = f"%{q}%"
     books = Book.query.filter(
-        db.or_(Book.name.ilike(like), Book.author.ilike(like), Book.isbn.ilike(like))
+        db.or_(
+            Book.name.ilike(like),
+            Book.author.ilike(like),
+            Book.isbn.ilike(like)
+        )
     ).all()
+
     return {"books": [b.to_dict() for b in books]}
 
+# -------------------------
+# STARTUP: create tables (1st deploy)
+# -------------------------
+with app.app_context():
+    db.create_all()
 
 # -------------------------
-# STARTUP: create tables if they don't exist
+# RUN
 # -------------------------
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()   # creates table(s) if missing
     app.run(debug=True)
