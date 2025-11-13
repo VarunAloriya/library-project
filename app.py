@@ -11,14 +11,10 @@ import os
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"  # change for production
 
-# ===============================
-# PostgreSQL DATABASE (Render)
-# ===============================
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://library_db_8i86_user:"
-    "KASZ1GeFtK0LDRNasYIdEjK4zyfSP7M2"
-    "@dpg-d4avmb0gjchc73f5pr5g-a/library_db_8i86"
-)
+# SQLite DB in project folder
+base_dir = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(base_dir, "books.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -131,13 +127,9 @@ def api_books():
     return {"books": [b.to_dict() for b in books]}
 
 # -------------------------
-# STARTUP: create tables (1st deploy)
-# -------------------------
-with app.app_context():
-    db.create_all()
-
-# -------------------------
-# RUN
+# STARTUP: create tables if they don't exist
 # -------------------------
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
