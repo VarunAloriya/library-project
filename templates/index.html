@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Book Finder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- Base ---------- */
+    :root{
+      --bg1:#071433;
+      --bg2:#04203a;
+      --card:#10243a;
+      --muted:#bfcbd7;
+      --accent1:linear-gradient(90deg,#7b2ff7,#2db7ff);
+      --accent2:#00d389;
+    }
+    *{box-sizing:border-box;font-family:'Poppins',system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    body{
+      margin:0;
+      min-height:100vh;
+      background: radial-gradient(1000px 600px at 10% 10%, rgba(37,72,118,0.35), transparent 10%),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#e6eef7;
+      -webkit-font-smoothing:antialiased;
+      padding:40px;
+    }
+
+    /* ---------- Top add button ---------- */
+    .topbar{display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px}
+    .add-btn{
+      background: linear-gradient(90deg,#10ffb0,#00c984);
+      color:#00221b;font-weight:700;
+      padding:12px 18px;border-radius:12px;
+      box-shadow:0 6px 18px rgba(0,200,140,0.16),0 2px 0 rgba(255,255,255,0.02) inset;
+      border:none;cursor:pointer;font-size:15px;
+    }
+
+    /* ---------- Center card ---------- */
+    .card{
+      max-width:880px;margin:0 auto;padding:38px;border-radius:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      box-shadow: 0 10px 30px rgba(3,10,20,0.6);
+      backdrop-filter: blur(8px);
+    }
+    h1{ text-align:center;font-size:36px;margin:0 0 18px 0;font-weight:700; }
+
+    .search-row{display:flex;gap:18px;align-items:center}
+    .search-field{
+      flex:1;padding:14px 16px;border-radius:10px;border:none;font-size:16px;
+      background:#eaf6ff0a;color:#fff;outline:none;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+    }
+    .search-btn{
+      padding:14px 30px;border-radius:12px;border:3px solid rgba(255,255,255,0.18);
+      background:var(--accent1); cursor:pointer; font-weight:600; color:white; font-size:18px;
+      box-shadow: 0 6px 22px rgba(124,63,255,0.12);
+    }
+
+    /* ---------- Results vertical list ---------- */
+    .results{margin-top:26px}
+    .result-item{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:18px;border-radius:12px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.03);
+      display:flex;gap:16px;align-items:flex-start;
+    }
+    .result-meta{flex:1}
+
+    .book-title{font-size:18px;font-weight:700;margin:0 0 6px 0}
+    .book-sub{color:var(--muted);margin:0 0 10px 0}
+
+    /* VERTICAL DETAILS FIX */
+    .book-details-vertical{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      color:#99b0c7;
+      font-size:14px;
+      line-height:1.4;
+      margin-top: 8px;
+    }
+
+    .notfound{color:var(--muted); margin-top:14px;font-size:15px}
+
+    /* ---------- Modal ---------- */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,8,20,0.6);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal{width:420px;background:#0e1b28;padding:20px;border-radius:14px;box-shadow:0 20px 60px rgba(2,8,20,0.8)}
+    .modal h3{margin:0 0 10px 0;text-align:center}
+    .modal .field{margin:10px 0}
+    .modal .field input{width:100%;padding:12px;border-radius:10px;border:none;font-size:15px}
+    .modal .actions{display:flex;gap:12px;margin-top:12px}
+    .btn-save{flex:1;background:var(--accent2);border:none;padding:12px;border-radius:10px;color:#00221b;font-weight:700;cursor:pointer}
+    .btn-cancel{flex:1;background:#646464;border:none;padding:12px;border-radius:10px;color:#f8f8f8;cursor:pointer}
+
+    /* responsive */
+    @media (max-width:600px){
+      .modal{width:92%}
+      .card{padding:24px}
+      h1{font-size:28px}
+    }
+
+    /* flash messages */
+    .flash{max-width:880px;margin:16px auto;padding:12px;border-radius:10px}
+    .flash.success{background:#052b1f;color:#9ff3c9}
+    .flash.danger{background:#3a1212;color:#f8bdbd}
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <button class="add-btn" id="openModal">+ Add Book</button>
+  </div>
+
+  <div class="card">
+    <h1>Find a Book</h1>
+
+    <form method="GET" action="/">
+      <div class="search-row">
+        <input name="search" class="search-field" placeholder="Enter book name, author, or ISBN" value="{{ query }}">
+        <button class="search-btn" type="submit">Search</button>
+      </div>
+    </form>
+
+    <div class="results">
+      {% if books %}
+        {% for b in books %}
+          <div class="result-item">
+            <div class="result-meta">
+
+              <div class="book-title">{{ b.name }}</div>
+              <div class="book-sub">by {{ b.author }} • {{ b.publisher or "Unknown Publisher" }}</div>
+
+              <!-- VERTICAL DETAILS HERE -->
+              <div class="book-details-vertical">
+                {% if b.isbn %}<div>ISBN: {{ b.isbn }}</div>{% endif %}
+                {% if b.year %}<div>Year: {{ b.year }}</div>{% endif %}
+                {% if b.genre %}<div>Genre: {{ b.genre }}</div>{% endif %}
+                {% if b.shelf %}<div>Shelf: {{ b.shelf }}</div>{% endif %}
+                {% if b.copies is not none %}<div>Copies: {{ b.copies }}</div>{% endif %}
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        {% if query %}
+          <div class="notfound">Not found: <strong>{{ query }}</strong></div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="max-width:880px;margin:18px auto;">
+      {% for cat, msg in messages %}
+        <div class="flash {{ 'success' if cat=='success' else 'danger' }}">{{ msg }}</div>
+      {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Add New Book</h3>
+      <form method="POST" action="/add" id="addForm">
+        <div class="field"><input name="isbn" placeholder="ISBN (optional)"></div>
+        <div class="field"><input name="name" placeholder="Book Title *" required></div>
+        <div class="field"><input name="author" placeholder="Author *" required></div>
+        <div class="field"><input name="publisher" placeholder="Publisher"></div>
+        <div class="field"><input name="year" placeholder="Year (e.g. 2016)"></div>
+        <div class="field"><input name="genre" placeholder="Genre (e.g. Sci-Fi)"></div>
+        <div class="field"><input name="shelf" placeholder="Shelf (e.g. A3)"></div>
+        <div class="field"><input name="copies" placeholder="Copies (e.g. 4)"></div>
+
+        <div class="actions">
+          <button type="submit" class="btn-save">Save</button>
+          <button type="button" class="btn-cancel" id="cancelModal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // modal show/hide
+    const openBtn = document.getElementById('openModal')
+    const modal = document.getElementById('modalBackdrop')
+    const cancel = document.getElementById('cancelModal')
+
+    openBtn.addEventListener('click', ()=> {
+      modal.style.display = 'flex'
+      setTimeout(()=> modal.querySelector('input[name="isbn"]').focus(), 100)
+    })
+
+    cancel.addEventListener('click', ()=> modal.style.display = 'none')
+
+    modal.addEventListener('click', (e)=>{
+      if(e.target === modal) modal.style.display = 'none'
+    })
+
+    const form = document.getElementById('addForm')
+    form.addEventListener('submit', ()=> {
+      form.querySelectorAll('button').forEach(b => b.disabled = true)
+    })
+  </script>
+</body>
+</html>
