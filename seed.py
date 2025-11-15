@@ -34,7 +34,7 @@ with app.app_context():
              publisher="Doubleday", year=2003, genre="Thriller", shelf="B3", copies=5),
 
         Book(isbn="9780747532699", name="Harry Potter and the Sorcerer's Stone", author="J.K. Rowling",
-             publisher="Bloomsbury", year=1997, genre="Fantasy", shelf="B4", copies=10),
+             publisher="Bloomsbury", year=1997, genre="Fantasy", shelf="B4", copies=1),
 
         Book(isbn="9780618640157", name="The Lord of the Rings", author="J.R.R. Tolkien",
              publisher="George Allen & Unwin", year=1954, genre="Fantasy", shelf="B5", copies=7),
